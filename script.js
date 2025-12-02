@@ -78,6 +78,12 @@ document.addEventListener('DOMContentLoaded', () => {
         currentLang = lang;
         document.documentElement.lang = lang;
 
+        // Update hidden form input
+        const formLanguageInput = document.getElementById('form-language');
+        if (formLanguageInput) {
+            formLanguageInput.value = lang;
+        }
+
         // Update buttons state
         if (lang === 'pt-BR') {
             langPtBtn.classList.add('active');
@@ -174,7 +180,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     let message;
                     if (Object.hasOwn(data, 'errors')) {
-                        message = data["errors"].map(error => error["message"]).join(", ");
+                        message = data["errors"].map(error => {
+                            const fieldKey = `form.${error.field}`;
+                            const fieldName = translations[currentLang][fieldKey] || error.field;
+
+                            if (currentLang === 'pt-BR') {
+                                if (error.code === 'MIN_VALUE') {
+                                    return `O campo "${fieldName}" é muito curto.`;
+                                }
+                                if (error.code === 'MAX_VALUE') {
+                                    return `O campo "${fieldName}" é muito longo.`;
+                                }
+                                if (error.code === 'REQUIRED') {
+                                    return `O campo "${fieldName}" é obrigatório.`;
+                                }
+                                if (error.code === 'EMAIL' || error.code === 'TYPE_EMAIL') {
+                                    return `O campo "${fieldName}" deve ser um email válido.`;
+                                }
+                                return `${fieldName}: ${error.message}`;
+                            } else {
+                                return `${fieldName} ${error.message}`;
+                            }
+                        }).join(", ");
                     } else {
                         message = currentLang === 'pt-BR'
                             ? 'Ops! Houve um problema ao enviar sua mensagem. Por favor, tente novamente.'
